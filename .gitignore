@@ -26,3 +26,5 @@ secrets.properties
 apikeys.json
 
 Thumbs.db
+
+/app/src/main/java/com/example/weatherapp/Sample.kt
