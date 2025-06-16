@@ -1,6 +1,7 @@
 package com.example.weatherapp
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -18,11 +20,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
 class MainActivity : AppCompatActivity() {
 
     // Launcher to request multiple permissions and handle the result
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+
+    // FusedLocationProviderClient to request location updates
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,11 +45,15 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
         // Register launcher to request multiple permissions at once
         permissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permission ->
-                val fineLocationGranted = permission[Manifest.permission.ACCESS_FINE_LOCATION] == true
-                val coarseLocationGranted = permission[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+                val fineLocationGranted =
+                    permission[Manifest.permission.ACCESS_FINE_LOCATION] == true
+                val coarseLocationGranted =
+                    permission[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
                 if (fineLocationGranted || coarseLocationGranted) {
                     checkLocationServices()
@@ -59,14 +74,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Check if location services are enabled, and if not, open location settings
-    private fun checkLocationServices() {
-        if (!isLocationEnabled()) {
+    // Return true if location is enabled else false.
+    private fun checkLocationServices(): Boolean {
+        return if (!isLocationEnabled()) {
             Toast.makeText(this, "Location service is disabled", Toast.LENGTH_SHORT).show()
             // Opens device location settings
             val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             startActivity(intent)
+            false
         } else {
             Toast.makeText(this, "Location service is enabled", Toast.LENGTH_SHORT).show()
+            true
         }
     }
 
@@ -76,7 +94,10 @@ class MainActivity : AppCompatActivity() {
         val coarseLocation = Manifest.permission.ACCESS_COARSE_LOCATION
 
         if (hasLocationPermissionEnabled()) {
-            checkLocationServices()
+            if (checkLocationServices()) {
+                // If location service is enabled, then get location data.
+                getLocationData()
+            }
         } else {
             // Request for location permission
             permissionLauncher.launch(arrayOf(fineLocation, coarseLocation))
@@ -119,5 +140,33 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, coarseLocation) == permissionGranted
 
         return fineGranted || coarseGranted
+    }
+
+    // Get latitude and longitude coordinates of the location
+    // Request location request and handle them using LocationCallBack
+    @SuppressLint("MissingPermission")
+    private fun getLocationData() {
+        // Create location request with HighAccuracy and update time of 5 secs.
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000).build()
+
+        // Listen for location updates
+        fusedLocationProviderClient.requestLocationUpdates(
+            locationRequest, object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    val location = locationResult.lastLocation
+                    if (location != null) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Latitude: ${location.latitude} \nLongitude: ${location.longitude}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this@MainActivity, "Location Unavailable", Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }, Looper.myLooper() // Run callback on main UI thread
+        )
     }
 }
