@@ -1,4 +1,4 @@
-package com.example.weatherapp.data.utils
+package com.example.weatherapp.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
