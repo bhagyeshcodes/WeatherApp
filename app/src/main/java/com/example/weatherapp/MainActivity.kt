@@ -20,7 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.weatherapp.utils.Constants
+import com.example.weatherapp.core.utils.NetworkUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
 
     // Check if the internet is available
     private fun getLocationWeatherDetails() {
-        if (Constants.isInternetAvailable(this)) {
+        if (NetworkUtils.isInternetAvailable(this)) {
             Toast.makeText(this, "Internet available", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "No internet connection available", Toast.LENGTH_SHORT).show()

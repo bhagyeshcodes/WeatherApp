@@ -1,10 +1,10 @@
-package com.example.weatherapp.utils
+package com.example.weatherapp.core.utils
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 
-object Constants {
+object NetworkUtils {
 
     // Checks whether the device is connected to the internet using available transports like WIFI,
     // Mobile Data or Ethernet and returns true otherwise returns false.
