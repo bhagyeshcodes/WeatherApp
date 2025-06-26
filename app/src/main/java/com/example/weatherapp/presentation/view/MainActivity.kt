@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.presentation.view
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -20,13 +21,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.weatherapp.R
 import com.example.weatherapp.core.utils.NetworkUtils
+import com.example.weatherapp.data.remote.RetrofitClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -161,7 +166,7 @@ class MainActivity : AppCompatActivity() {
                             "Latitude: ${location.latitude} \nLongitude: ${location.longitude}",
                             Toast.LENGTH_SHORT
                         ).show()
-                        getLocationWeatherDetails()
+                        getLocationWeatherDetails(location.latitude, location.longitude)
                     } else {
                         Toast.makeText(
                             this@MainActivity, "Location Unavailable", Toast.LENGTH_SHORT
@@ -173,9 +178,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Check if the internet is available
-    private fun getLocationWeatherDetails() {
+    private fun getLocationWeatherDetails(lat: Double, lon: Double) {
         if (NetworkUtils.isInternetAvailable(this)) {
-            Toast.makeText(this, "Internet available", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                // Get complete weather data of the current location
+                val data = RetrofitClient.service.getWeatherDetails(lat, lon)
+                Log.d("DATA", "getLocationWeatherDetails: $data")
+                Toast.makeText(this@MainActivity, data.toString(), Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(this, "No internet connection available", Toast.LENGTH_SHORT).show()
         }
